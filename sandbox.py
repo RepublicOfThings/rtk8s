@@ -1,20 +1,12 @@
-import os
-import shutil
-import jinja2
+from rtk8s.rendering import render_project
 
+# conf_path = ".rtk8s_apps/v1/{name}/conf.yml"
+# config = json.load(open(conf_path))
 
-def render_string():
-    jinja2.Environment().
+config = {"service": {"name": "proxima"}}
 
+name = config["service"]["name"]
 
-def render_project(templates, target):
-    for root, dirs, files in os.walk(templates):
-        for file in files:
-            src = os.path.join(root, file)
-            dst = os.path.join(target, root.replace(templates, ""))
-
-            with open(src, "r") as file:
-                pass
-
-# out = "./test"
-# path = "rtk8s/templates/v1/service/"
+render_project("rtk8s/templates/v1/service/",
+               f".rtk8s_apps/v1/{name}/service",
+               config)
