@@ -1,0 +1,30 @@
+version: "beta"
+
+service:
+  name: "{{ app.name }}"
+  host: "{{ app.host }}"
+  port: "80"
+
+  dashboards:
+    Vodafone:
+      app: "rot_smart_homes_app"
+      name: "smeiling_dashboard_vodafone_demo_v10"
+
+  splunk:
+    host: "{{ splunk.host }}"
+    port: "{{ splunk.port }}"
+    scheme: "http"
+    username: "{{ splunk.username }}"
+    password: "{{ splunk.password }}"
+
+  style:
+    logos:
+      smeiling: "app/SmEILing.png"
+      republic: "app/republic_logo.png"
+      partner: "app/vodafone.png"
+
+    stylesheets:
+      - "app/content/republic.css"
+
+  deploy:
+    target: "k8s"
