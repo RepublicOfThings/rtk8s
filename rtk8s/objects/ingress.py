@@ -27,7 +27,7 @@ class Ingress:
     @staticmethod
     def _build_rules(paths):
         return [
-            {"path": path,
+            {"path": "/"+path,
             "backend": {
                 "serviceName": path,
                 "servicePort": path+"-tcp"

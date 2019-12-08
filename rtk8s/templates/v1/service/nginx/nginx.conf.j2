@@ -12,27 +12,23 @@ server {
     listen 80 default_server;
     listen [::]:80 default_server ipv6only=on;
 
-    listen 443 ssl;
+    server_name {{ service.name }};
 
-    server_name localhost;
-
-    location /proxy/ {
+    location {{ service.name }}/proxy/ {
         proxy_pass http://splunk/proxy/;
         sub_filter '/en-US' '/proxy/en-US';
         sub_filter_once off;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host $host/proxy;
+        proxy_set_header Host $host/{{ service.name }}/proxy;
         proxy_redirect off;
-        proxy_set_header SCRIPT_NAME /proxy/;
+        proxy_set_header SCRIPT_NAME {{ service.name }}/proxy/;
     }
 
-    location /vodademo/ {
+    location {{ service.name }}/app/ {
         proxy_pass http://smeiling/vodademo/;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $host;
-        proxy_set_header SCRIPT_NAME /vodademo/;
+        proxy_set_header SCRIPT_NAME {{ service.name }}/app/;
     }
 
-    ssl_certificate keys/cert.pem;
-    ssl_certificate_key keys/key.pem;
 }

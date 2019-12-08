@@ -4,7 +4,7 @@ EXPOSE 5000
 
 RUN useradd republic
 
-RUN pip install flask pyyaml pyopenssl requests gunicorn beautifulsoup4
+RUN pip install flask pyyaml pyopenssl requests gunicorn
 
 COPY /splunk /app
 COPY /config /app/config

@@ -1,17 +1,21 @@
-import re
-import logging
 import requests
-from bs4 import BeautifulSoup
-from flask import Flask, request, Response, redirect, url_for, render_template
 from werkzeug.routing import Rule
-import settings
+from flask import Flask, request, Response, redirect, url_for, render_template
 
-from settings import PROXY_NAME
+
+# This is the subpath this service will be mounted on.
+SUBPATH = "{{ service.name }}/proxy"
+
+# This is the base URL for the service.
+BASE_URL = "{{ service.scheme }}://{{ service.host }}:{{ service.port }}"
+
+# This is the base URL for the target Splunk instance.
+SPLUNK_BASE_URL = "{{ service.splunk.scheme }}://{{ service.splunk.host }}:{{ service.splunk.port }}"
+DASHBOARD_CONF = {{ service.dashboards }}
 
 
 app = Flask(__name__)
-PREFIX = "/proxy"
-app.url_rule_class = lambda path, **options: Rule(PREFIX + path, **options)
+app.url_rule_class = lambda path, **options: Rule(SUBPATH + path, **options)
 
 session = requests.Session()
 
@@ -22,20 +26,18 @@ def proxy(path: str):
 
     try:
         data = session.get(
-            f"{settings.SPLUNK_BASE}/en-US/{path}", params=request.args
+            f"{SPLUNK_BASE_URL}/en-US/{path}", params=request.args
         ).content
         data = data.decode("utf-8")
-        data = data.replace("/en-US", f"/{PROXY_NAME}/en-US")
+        data = data.replace("/en-US", f"/{SUBPATH}/en-US")
+
         if path.endswith("dashboard.js"):
-            logging.error(len(data))
             data = data.replace('make_url("/static/build/pages/enterprise")',
-                                '"/proxy" + make_url("/static/build/pages/enterprise")')
-            logging.error(len(data))
-            logging.error(path)
+                                f'"{SUBPATH}" + make_url("/static/build/pages/enterprise")')
 
     except UnicodeDecodeError:
         data = session.get(
-            f"{settings.SPLUNK_BASE}/en-US/{path}", params=request.args
+            f"{SPLUNK_BASE_URL}/en-US/{path}", params=request.args
         ).content
 
     if path.endswith(".js"):
@@ -66,7 +68,7 @@ def proxy_splunkd(path):
     }
 
     response = session.post(
-        f"{settings.SPLUNK_BASE}/en-US/{path}",
+        f"{SPLUNK_BASE_URL}/en-US/{path}",
         data=request.values.to_dict(),
         verify=False,
         headers=headers,
@@ -78,19 +80,19 @@ def proxy_splunkd(path):
 @app.route(f"/_login")
 def login():
 
-    dashboard = settings.DASHBOARDS[request.args["dashboard"]]
+    dashboard = DASHBOARD_CONF[request.args["dashboard"]]
 
     return_to = f"app/{dashboard['app']}/{dashboard['name']}"
 
     args = {
-        "username": settings.SPLUNK_USERNAME,
-        "password": settings.SPLUNK_PASSWORD
+        "username": "{{ service.splunk.username }}",
+        "password": "{{ service.splunk.password }}"
     }
 
-    response = session.get(f"{settings.SPLUNK_BASE}/en-US/account/insecurelogin", params=args)
+    response = session.get(f"{SPLUNK_BASE_URL}/en-US/account/insecurelogin", params=args)
 
     if response.status_code == 200:
-        return redirect(f"{settings.PROXY_BASE}/{PROXY_NAME}/en-US/{return_to}")
+        return redirect(f"{BASE_URL}/{SUBPATH}/en-US/{return_to}")
     else:
         return redirect(url_for("error", message=response.content, status=response.status_code))
 
@@ -108,4 +110,4 @@ def error():
 
 
 if __name__ == "__main__":
-    app.run(host=settings.PROXY_HOST, port=settings.PROXY_PORT)
+    app.run(host="{{ service.host }}", port="{{ service.port }}")

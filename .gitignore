@@ -133,3 +133,5 @@ dmypy.json
 .idea/modules.xml
 .idea/misc.xml
 .idea/libraries/R_User_Library.xml
+sandbox.py
+config.yml

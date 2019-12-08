@@ -1,12 +1,21 @@
-from rtk8s.rendering import render_project
 
-# conf_path = ".rtk8s_apps/v1/{name}/conf.yml"
-# config = json.load(open(conf_path))
 
-config = {"service": {"name": "proxima"}}
+# delete("default")
+create("smeiling", "./keys")
+add("vodademo", "smeiling")
+add("oderdemo", "smeiling")
+build("vodademo", "smeiling")
+build("oderdemo", "smeiling")
 
-name = config["service"]["name"]
+# try:
+#     remove("example", "smeiling")
+# except:
+#     pass
+#
+# add("example", "smeiling")
+# build("example", "smeiling")
 
-render_project("rtk8s/templates/v1/service/",
-               f".rtk8s_apps/v1/{name}/service",
-               config)
+# remove("example", "smeiling")
+# remove("example", "smeiling")
+# generate("config.yml")
+# remove("")

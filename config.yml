@@ -1,8 +1,8 @@
 version: "beta"
 
 service:
-  name: "{{ app.name }}"
-  host: "{{ app.host }}"
+  name: "vodademo"
+  host: "35.189.248.12"
   port: "80"
   scheme: "http"
 
@@ -12,11 +12,11 @@ service:
       name: "smeiling_dashboard_vodafone_demo_v10"
 
   splunk:
-    host: "{{ splunk.host }}"
-    port: "{{ splunk.port }}"
+    host: "37.48.244.182"
+    port: "8000"
     scheme: "http"
-    username: "{{ splunk.username }}"
-    password: "{{ splunk.password }}"
+    username: "vodademo"
+    password: "b98puxPJinkQ"
 
   style:
     logos:
@@ -28,5 +28,5 @@ service:
       - "app/content/republic.css"
 
   deploy:
-    target: "k8s"
+    target: "microk8s"
     container_repo: "localhost:32000"
