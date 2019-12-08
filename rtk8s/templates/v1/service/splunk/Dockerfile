@@ -7,7 +7,6 @@ RUN useradd republic
 RUN pip install flask pyyaml pyopenssl requests gunicorn
 
 COPY /splunk /app
-COPY /config /app/config
 
 WORKDIR /app
 

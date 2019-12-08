@@ -7,7 +7,7 @@ RUN useradd republic
 RUN pip install --upgrade django==2.0.3 pyyaml gunicorn==19.9.0 beautifulsoup4
 
 COPY /smeiling /app
-COPY /config /app/config
+
 WORKDIR /app
 
 

@@ -18,8 +18,6 @@ from django.urls import path
 from django.conf.urls import include, url
 from django.contrib import admin
 
-CONFIG = yaml.load(open("config/config.yml"), Loader=yaml.SafeLoader)["app"]
-
 urlpatterns = [
     url(r"^", include("webapp.urls"))
 ]

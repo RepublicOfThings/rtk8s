@@ -1,5 +1,5 @@
 upstream splunk {
-    server localhost:5000/proxy fail_timeout=5;
+    server localhost:5000/{{ service.name }}/proxy fail_timeout=5;
 }
 
 

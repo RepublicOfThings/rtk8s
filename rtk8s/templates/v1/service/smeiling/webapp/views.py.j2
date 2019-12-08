@@ -5,20 +5,20 @@ from django.http import HttpResponse
 
 logging.basicConfig(level=logging.DEBUG)
 
-CONFIG = yaml.load(open("config/config.yml"), Loader=yaml.SafeLoader)["app"]
+CONFIG = {{ service }}
 
-logo = CONFIG.get("style", "/static/app/SmEILing.png")
+logos = {{ service.style.logos }}
 dashboards = CONFIG.get("dashboards", {})
 stylesheet = CONFIG.get("stylesheet", "app/content/republic.css")
 
-BASE_URL = "{protocol}://{host}:{port}/{app}".format(protocol="https" if CONFIG.get("ssl", False) else "http",
+BASE_URL = "{protocol}://{host}:{port}/{app}/app".format(protocol="https" if CONFIG.get("ssl", False) else "http",
                                                      host=CONFIG["host"],
                                                      port=CONFIG["port"],
                                                      app=CONFIG["name"])
 
 META = {
     "css": stylesheet,
-    "logo": logo["logos"],
+    "logo": logos,
     "app": CONFIG["name"],
     "base_url": BASE_URL,
     "dashboards": dashboards

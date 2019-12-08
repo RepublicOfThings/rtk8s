@@ -7,7 +7,7 @@ from flask import Flask, request, Response, redirect, url_for, render_template
 SUBPATH = "{{ service.name }}/proxy"
 
 # This is the base URL for the service.
-BASE_URL = "{{ service.scheme }}://{{ service.host }}:{{ service.port }}"
+BASE_URL = "/{{ service.scheme }}://{{ service.host }}:{{ service.port }}"
 
 # This is the base URL for the target Splunk instance.
 SPLUNK_BASE_URL = "{{ service.splunk.scheme }}://{{ service.splunk.host }}:{{ service.splunk.port }}"

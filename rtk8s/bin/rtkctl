@@ -4,15 +4,19 @@ import json
 import yaml
 import shutil
 import subprocess
+import pkg_resources
 
 import click
 
 from rtk8s.rendering import render_project, render_string
 from rtk8s.objects import Secret, Ingress
 
+TEMPLATES_ROOT = pkg_resources.resource_filename("rtk8s", "templates")
 
-RTK_SVC_TEMPLATE = "rtk8s/templates/v1/service/"
-RTK_CONF_TEMPLATE = "tk8s/templates/v1/spec/config.yml"
+V1_ROOT = os.path.join(TEMPLATES_ROOT, "v1")
+
+RTK_SVC_TEMPLATE = os.path.join(V1_ROOT, "service/")
+RTK_CONF_TEMPLATE = os.path.join(V1_ROOT, "spec/config.yml")
 
 
 def _update(deployment, target, prefix):
@@ -114,9 +118,11 @@ def add(name, deployment, target, prefix, template):
 @click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
 @click.option("-t", "--target", default="default")
 @click.option("-T", "--templates", default=RTK_SVC_TEMPLATE)
-def build(name, *_, target, prefix, templates):
+def build(name, deployment, target, prefix, templates):
     root = os.path.join(prefix, target)
     conf_path = os.path.join(root, "registry", name+".json")
+
+    print(f"Building {name} for {deployment}...")
     if not os.path.exists(root):
         raise FileNotFoundError(f"Cannot find an initialised rtk8s deployment at {root}.")
     elif not os.path.exists(conf_path):
@@ -142,6 +148,8 @@ def build(name, *_, target, prefix, templates):
                 for file in files:
                     cmd = f"kubectl apply -f {file}"
                     print(cmd)
+
+    print(f"Built {name} for {deployment}. Your service will be available shortly at '/{name}/app'")
 
 
 @cli.command()
