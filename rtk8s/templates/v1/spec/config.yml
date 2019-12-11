@@ -1,10 +1,11 @@
 version: "beta"
 
-service:
+app:
   name: "{{ app.name }}"
   host: "{{ app.host }}"
   port: "80"
   scheme: "http"
+  replicas: 1
 
   dashboards:
     Vodafone:
@@ -20,13 +21,12 @@ service:
 
   style:
     logos:
-      smeiling: "app/SmEILing.png"
-      republic: "app/republic_logo.png"
-      partner: "app/vodafone.png"
+      smeiling: "/app/SmEILing.png"
+      republic: "/app/republic_logo.png"
+      partner: "/app/vodafone.png"
 
     stylesheets:
-      - "app/content/republic.css"
+      - "/app/content/republic.css"
 
-  deploy:
-    target: "k8s"
-    container_repo: "localhost:32000"
+  deployment:
+    repo: "localhost:32000"

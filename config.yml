@@ -1,10 +1,10 @@
 version: "beta"
 
-service:
-  name: "vodademo"
+app:
+  name: "alterdemo"
   host: "35.189.248.12"
   port: "80"
-  scheme: "http"
+  scheme: "https"
 
   dashboards:
     Vodafone:
@@ -27,6 +27,5 @@ service:
     stylesheets:
       - "app/content/republic.css"
 
-  deploy:
-    target: "microk8s"
-    container_repo: "localhost:32000"
+  deployment:
+    repo: "localhost:32000"

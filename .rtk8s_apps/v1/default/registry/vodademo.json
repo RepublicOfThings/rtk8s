@@ -1,0 +1,35 @@
+{
+    "version": "beta",
+    "app": {
+        "name": "vodademo",
+        "host": "35.189.248.12",
+        "port": "80",
+        "scheme": "https",
+        "dashboards": {
+            "Vodafone": {
+                "app": "rot_smart_homes_app",
+                "name": "smeiling_dashboard_vodafone_demo_v10"
+            }
+        },
+        "splunk": {
+            "host": "37.48.244.182",
+            "port": "8000",
+            "scheme": "http",
+            "username": "vodademo",
+            "password": "b98puxPJinkQ"
+        },
+        "style": {
+            "logos": {
+                "smeiling": "app/SmEILing.png",
+                "republic": "app/republic_logo.png",
+                "partner": "app/vodafone.png"
+            },
+            "stylesheets": [
+                "app/content/republic.css"
+            ]
+        },
+        "deployment": {
+            "repo": "localhost:32000"
+        }
+    }
+}

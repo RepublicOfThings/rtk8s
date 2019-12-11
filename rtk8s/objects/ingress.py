@@ -10,7 +10,10 @@ class Ingress:
             "kind": "Ingress",
             "metadata": {
                 "name": f"{name}-ingress",
-                "namespace": namespace
+                "namespace": namespace,
+                "annotations": {
+                    "nginx.ingress.kubernetes.io/use-regex": "true"
+                }
             },
             "spec": {
                 "tls": [
@@ -27,11 +30,12 @@ class Ingress:
     @staticmethod
     def _build_rules(paths):
         return [
-            {"path": "/"+path,
+            {"path": "/"+path+"/*",
             "backend": {
                 "serviceName": path,
-                "servicePort": path+"-tcp"
-            }} for path in paths
+                "servicePort": path.replace("-", "")
+                }
+            } for path in paths
         ]
 
     def to_json(self, **kwargs):
