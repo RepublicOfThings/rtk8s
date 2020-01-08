@@ -37,7 +37,4 @@ def render_project(templates, target, config, markers=(".j2",), overwrite=False)
                 shutil.copy2(src, dst)
 
 
-__all__ = [
-    "render_project",
-    "render_string"
-]
+__all__ = ["render_project", "render_string"]

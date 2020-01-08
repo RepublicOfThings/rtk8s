@@ -13,34 +13,23 @@ class Ingress:
                 "namespace": namespace,
                 "annotations": {
                     "nginx.ingress.kubernetes.io/use-regex": "true",
-                    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
-                }
+                    "nginx.ingress.kubernetes.io/ssl-redirect": "true",
+                },
             },
             "spec": {
-                "tls": [
-                    {
-                        "secretName": "smeiling-tls"
-                    }
-                ],
-                "rules": [
-                    {
-                        "http": {
-                            "paths": [*self._build_rules(paths)]
-                        }
-                    }
-                ]
-            }
+                "tls": [{"secretName": "smeiling-tls"}],
+                "rules": [{"http": {"paths": [*self._build_rules(paths)]}}],
+            },
         }
 
     @staticmethod
     def _build_rules(paths):
         return [
-            {"path": "/"+path+"/*",
-            "backend": {
-                "serviceName": path,
-                "servicePort": path.replace("-", "")
-                }
-            } for path in paths
+            {
+                "path": "/" + path + "/*",
+                "backend": {"serviceName": path, "servicePort": path.replace("-", "")},
+            }
+            for path in paths
         ]
 
     def to_json(self, **kwargs):

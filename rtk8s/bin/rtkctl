@@ -39,7 +39,7 @@ def _update(deployment, prefix):
             if file.endswith(".json"):
                 subpath = file.replace(".json", "")
                 for component in components:
-                    paths.append(subpath+"-"+component)
+                    paths.append(subpath + "-" + component)
 
     ingress_path = os.path.join(path, "manifests", "ingress.json")
     ingress = Ingress(deployment, paths=paths)
@@ -64,9 +64,15 @@ def delete(target, prefix, confirm):
     """Delete a target deployment. This will remove _all_ apps associated with this deployment, including metadata."""
     root = os.path.join(prefix, target)
     if not os.path.exists(root):
-        raise FileNotFoundError(f"Cannot find an initialised rtk8s deployment at {root}.")
+        raise FileNotFoundError(
+            f"Cannot find an initialised rtk8s deployment at {root}."
+        )
 
-    elif confirm and input(f"Are you sure you want to delete the deployment at {root}? Y/n") == "Y":
+    elif (
+        confirm
+        and input(f"Are you sure you want to delete the deployment at {root}? Y/n")
+        == "Y"
+    ):
 
         print("Deleting apps...")
         for app in os.listdir(os.path.join(root, "registry")):
@@ -103,10 +109,11 @@ def create(deployment, ssl_keys, prefix):
         secret_path = os.path.join(path, "manifests", "secret.json")
         ingress_path = os.path.join(path, "manifests", "ingress.json")
 
-        secret = Secret(deployment,
-                        crt=os.path.join(ssl_keys, "cert.pem"),
-                        key=os.path.join(ssl_keys, "key.pem")
-                        )
+        secret = Secret(
+            deployment,
+            crt=os.path.join(ssl_keys, "cert.pem"),
+            key=os.path.join(ssl_keys, "key.pem"),
+        )
 
         ingress = Ingress(deployment)
 
@@ -129,14 +136,18 @@ def create(deployment, ssl_keys, prefix):
 @click.option("-T", "--template", default=RTK_CONF_TEMPLATE)
 def add(name, deployment, prefix, config, template):
 
-    splunk_info = {"username": os.getenv("SPLUNK_USERNAME", ""),
-                   "password": os.getenv("SPLUNK_USERNAME", ""),
-                   "host": os.getenv("SPLUNK_HOST", ""),
-                   "port": os.getenv("SPLUNK_PORT", "")}
+    splunk_info = {
+        "username": os.getenv("SPLUNK_USERNAME", ""),
+        "password": os.getenv("SPLUNK_USERNAME", ""),
+        "host": os.getenv("SPLUNK_HOST", ""),
+        "port": os.getenv("SPLUNK_PORT", ""),
+    }
 
     if not config:
         app_info = {"host": os.getenv("SMEILING_HOST", ""), "name": name}
-        data = render_string(open(template).read(), {"app": app_info, "splunk": splunk_info})
+        data = render_string(
+            open(template).read(), {"app": app_info, "splunk": splunk_info}
+        )
         config = yaml.load(io.StringIO(data), yaml.SafeLoader)
     elif config.endswith(".json"):
         config = json.load(open(config))
@@ -162,21 +173,26 @@ def add(name, deployment, prefix, config, template):
 @click.argument("deployment")
 @click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
 @click.option("-T", "--templates", default=RTK_SVC_TEMPLATE)
-def deploy(name, deployment, prefix, templates):
+@click.option("--rebuild", is_flag=True)
+def deploy(name, deployment, prefix, templates, rebuild):
     root = os.path.join(prefix, deployment)
     src_path = os.path.join(prefix, deployment, "src", name)
-    conf_path = os.path.join(root, "registry", name+".json")
+    conf_path = os.path.join(root, "registry", name + ".json")
 
     print(f"Building {name} for {deployment}...")
     if not os.path.exists(root):
-        raise FileNotFoundError(f"Cannot find an initialised rtk8s deployment at {root}.")
+        raise FileNotFoundError(
+            f"Cannot find an initialised rtk8s deployment at {root}."
+        )
     elif not os.path.exists(conf_path):
-        raise FileNotFoundError(f"Cannot find a valid config for {name} at {conf_path}.")
-    elif os.path.exists(src_path):
+        raise FileNotFoundError(
+            f"Cannot find a valid config for {name} at {conf_path}."
+        )
+    elif os.path.exists(src_path) and not rebuild:
         for component in ["app", "proxy"]:
-
-            print(os.path.join(src_path, component, "manifests"))
-            for root, dirs, files in os.walk(os.path.join(src_path, component, "manifests")):
+            for root, dirs, files in os.walk(
+                os.path.join(src_path, component, "manifests")
+            ):
                 for file in files:
                     _cmd(f"kubectl apply -f {os.path.join(root, file)}")
     else:
@@ -191,26 +207,38 @@ def deploy(name, deployment, prefix, templates):
                 component = os.path.split(root)[-1]
                 for file in files:
                     if file == "Dockerfile":
-                        _cmd(f"docker build {src_path} -t {name}-{component}:latest -f {src_path}/{component}/Dockerfile")
+                        _cmd(
+                            f"docker build {src_path} -t {name}-{component}:latest -f {src_path}/{component}/Dockerfile"
+                        )
 
-                        repo_host = config["app"].get("deployment", {}).get("repo", "localhost:32000")
+                        repo_host = (
+                            config["app"]
+                            .get("deployment", {})
+                            .get("repo", "localhost:32000")
+                        )
                         if repo_host.startswith("localhost"):
                             """
                             docker build . -t ${dir%/}:latest -f ${dir%/}/Dockerfile
                             docker tag ${dir%/} gcr.io/encoded-antler-258511/${dir%/}
                             docker push gcr.io/encoded-antler-258511/${dir%/}
                             """
-                        _cmd(f"docker tag {name}-{component} {repo_host}/{name}-{component}")
+                        _cmd(
+                            f"docker tag {name}-{component} {repo_host}/{name}-{component}"
+                        )
                         _cmd(f"docker push {repo_host}/{name}-{component}")
 
             for component in ["app", "proxy"]:
-                for root, dirs, files in os.walk(os.path.join(src_path, component, "manifests")):
+                for root, dirs, files in os.walk(
+                    os.path.join(src_path, component, "manifests")
+                ):
                     for file in files:
                         _cmd(f"kubectl apply -f {os.path.join(root, file)}")
 
     _update(deployment, prefix)
 
-    print(f"Built {name} for {deployment}. Your service will be available shortly at '/{name}-app'")
+    print(
+        f"Built {name} for {deployment}. Your service will be available shortly at '/{name}-app'"
+    )
 
 
 @cli.command()
@@ -224,12 +252,18 @@ def remove(name, deployment, prefix, clean_all):
     src_path = os.path.join(root, "src", name)
 
     if not os.path.exists(root):
-        raise FileNotFoundError(f"Cannot find an initialised rtk8s deployment at {root}.")
+        raise FileNotFoundError(
+            f"Cannot find an initialised rtk8s deployment at {root}."
+        )
     elif not os.path.exists(conf_path):
-        raise FileNotFoundError(f"Cannot remove app '{name}' - it does not exist (no file at {conf_path}.")
+        raise FileNotFoundError(
+            f"Cannot remove app '{name}' - it does not exist (no file at {conf_path}."
+        )
     elif not os.path.join(src_path):
-        raise FileNotFoundError(f"Malformed app initialisation detected. "
-                                f"Got a valid registry file, but no src at {src_path}. Aborting.")
+        raise FileNotFoundError(
+            f"Malformed app initialisation detected. "
+            f"Got a valid registry file, but no src at {src_path}. Aborting."
+        )
     else:
 
         for component in ["app", "proxy"]:

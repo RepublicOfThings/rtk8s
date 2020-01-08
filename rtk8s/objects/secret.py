@@ -8,15 +8,12 @@ class Secret:
         self._data = {
             "apiVersion": "v1",
             "kind": "Secret",
-            "metadata": {
-                "name": f"{name}-tls",
-                "namespace": namespace
-            },
+            "metadata": {"name": f"{name}-tls", "namespace": namespace},
             "data": {
                 "tls.crt": self._encode_key(crt),
-                "tls.key": self._encode_key(key)
+                "tls.key": self._encode_key(key),
             },
-            "type": "kubernetes.io/tls"
+            "type": "kubernetes.io/tls",
         }
 
     @staticmethod
