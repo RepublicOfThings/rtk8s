@@ -12,7 +12,8 @@ class Ingress:
                 "name": f"{name}-ingress",
                 "namespace": namespace,
                 "annotations": {
-                    "nginx.ingress.kubernetes.io/use-regex": "true"
+                    "nginx.ingress.kubernetes.io/use-regex": "true",
+                    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
                 }
             },
             "spec": {
@@ -22,7 +23,11 @@ class Ingress:
                     }
                 ],
                 "rules": [
-                    *self._build_rules(paths)
+                    {
+                        "http": {
+                            "paths": [*self._build_rules(paths)]
+                        }
+                    }
                 ]
             }
         }

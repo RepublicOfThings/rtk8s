@@ -2,11 +2,11 @@ from urllib.parse import urljoin
 from werkzeug.routing import Rule
 from flask import Flask, render_template, request
 
-PREFIX = "{{ app.name }}-app"
+PREFIX = "/{{ app.name }}-app"
 
 PROXY_BASE_URL = "{{ app.scheme }}://{{ app.host }}/{{ app.name }}-proxy/"
 
-CONFIG = {{ app.dashboards }}
+CONFIG = {"dashboards": {{ app.dashboards }}}
 
 
 app = Flask(__name__, template_folder="templates", static_folder="static", static_url_path=PREFIX+"/static/")

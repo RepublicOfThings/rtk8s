@@ -5,7 +5,7 @@ from werkzeug.routing import Rule
 from flask import Flask, request, Response, redirect, url_for, render_template
 
 
-SUBPATH = "{{ app.name }}-proxy"
+SUBPATH = "/{{ app.name }}-proxy"
 
 SPLUNK_USERNAME = "{{ app.splunk.username }}"
 SPLUNK_PASSWORD = "{{ app.splunk.password }}"
@@ -93,9 +93,9 @@ def login():
     response = session.get(f"{SPLUNK_BASE_URL}/en-US/account/insecurelogin", params=args)
 
     if response.status_code == 200:
-        return redirect(f"{SUBPATH}/en-US/{return_to}")
+        return redirect(f"https://{{ app.host }}/{SUBPATH}/en-US/{return_to}")
     else:
-        return redirect(url_for("error", message=response.content, status=response.status_code))
+        return redirect(url_for("error", message=response.content, status=response.status_code, _scheme="https", _external=True))
 
 
 @app.route("/ping")

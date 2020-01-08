@@ -1,8 +1,8 @@
 version: "beta"
 
 app:
-  name: "alterdemo"
-  host: "35.189.248.12"
+  name: "demo"
+  host: "35.186.244.102"
   port: "80"
   scheme: "https"
 
@@ -22,10 +22,10 @@ app:
     logos:
       smeiling: "app/SmEILing.png"
       republic: "app/republic_logo.png"
-      partner: "app/vodafone.png"
+      partner: "app/republic_logo.png"
 
     stylesheets:
       - "app/content/republic.css"
 
   deployment:
-    repo: "localhost:32000"
+    repo: "gcr.io/encoded-antler-258511"

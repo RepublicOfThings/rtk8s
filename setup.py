@@ -28,7 +28,7 @@ build_manifest()
 
 setup(
     name="rtk8s",
-    version="0.0.2",
+    version="0.0.4",
     packages=find_packages(exclude=["contrib", "test-docs", "tests*"]),
     install_requires=["click", "pyyaml"],
     include_package_data=True,

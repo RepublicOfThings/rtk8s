@@ -12,8 +12,8 @@ spec:
         app: {{ app.name }}-app
     spec:
       containers:
-      - name: {{ app.name }}
-        image: {{ app.deployment.repo }}/{{ app.name }}
+      - name: {{ app.name }}-app
+        image: {{ app.deployment.repo }}/{{ app.name }}-app
         ports:
           - containerPort: 5000
         env:

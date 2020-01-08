@@ -9,7 +9,7 @@ class Secret:
             "apiVersion": "v1",
             "kind": "Secret",
             "metadata": {
-                "name": f"{name}-ingress",
+                "name": f"{name}-tls",
                 "namespace": namespace
             },
             "data": {
@@ -21,10 +21,13 @@ class Secret:
 
     @staticmethod
     def _encode_key(path):
-        with open(path, "rb") as file:
+        with open(path, "r") as file:
             data = file.read()
 
-        return base64.encodebytes(data).decode("utf-8")
+        s = data.encode("utf-8")
+        s = base64.encodebytes(s).decode("utf-8").replace("\n", "")
+
+        return s
 
     def to_json(self, **kwargs):
         return json.dumps(self._data, **kwargs)

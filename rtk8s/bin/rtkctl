@@ -20,23 +20,35 @@ RTK_CONF_TEMPLATE = os.path.join(V1_ROOT, "spec/config.yml")
 
 
 def _cmd(s):
-    print(s)
+    """Execute a given command."""
+    try:
+        subprocess.call(s.split())
+    except subprocess.CalledProcessError:
+        raise IOError(f"Failed to execute command '{s}'. Aborting.")
 
 
-def _update(deployment, target, prefix):
-    path = os.path.join(prefix, target)
+def _update(deployment, prefix):
+    """Update the target deployment."""
 
+    path = os.path.join(prefix, deployment)
+
+    components = ["proxy", "app"]
     paths = []
     for root, dirs, files in os.walk(os.path.join(path, "registry")):
         for file in files:
             if file.endswith(".json"):
                 subpath = file.replace(".json", "")
-                paths.append(subpath)
+                for component in components:
+                    paths.append(subpath+"-"+component)
 
+    ingress_path = os.path.join(path, "manifests", "ingress.json")
     ingress = Ingress(deployment, paths=paths)
 
-    with open(os.path.join(path, "manifests", "ingress.json"), "w") as ingress_spec:
+    with open(ingress_path, "w") as ingress_spec:
         ingress_spec.write(ingress.to_json(indent=4))
+
+    # secret_path = os.path.join(path, "manifests", "secret.json")
+    _cmd(f"kubectl apply -f {ingress_path}")
 
 
 @click.group()
@@ -49,6 +61,7 @@ def cli():
 @click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
 @click.option("-c", "--confirm", default=True)
 def delete(target, prefix, confirm):
+    """Delete a target deployment. This will remove _all_ apps associated with this deployment, including metadata."""
     root = os.path.join(prefix, target)
     if not os.path.exists(root):
         raise FileNotFoundError(f"Cannot find an initialised rtk8s deployment at {root}.")
@@ -59,15 +72,19 @@ def delete(target, prefix, confirm):
         for app in os.listdir(os.path.join(root, "registry")):
             name = os.path.splitext(app)[0]
             print(f"Deleting '{name}'...")
+            cdir = os.path.join(root, "src", name, "app", "manifests")
             for file in os.listdir(os.path.join(root, "src", name, "app", "manifests")):
-                _cmd(f"kubectl delete -f {file}")
+                _cmd(f"kubectl delete -f {os.path.join(cdir, file)}")
 
-            for file in os.listdir(os.path.join(root, "src", name, "proxy", "manifests")):
-                _cmd(f"kubectl delete -f {file}")
+            cdir = os.path.join(root, "src", name, "proxy", "manifests")
+            for file in os.listdir(cdir):
+                _cmd(f"kubectl delete -f {os.path.join(cdir, file)}")
 
         print("Deleting ingress...")
-        for file in os.listdir(os.path.join(root, "manifests")):
-            _cmd(f"kubectl delete -f {file}")
+        cdir = os.path.join(root, "manifests")
+        for file in os.listdir(cdir):
+            _cmd(f"kubectl delete -f {os.path.join(cdir, file)}")
+
         print("Cleaning directories...")
         shutil.rmtree(root)
         print("Done.")
@@ -75,38 +92,42 @@ def delete(target, prefix, confirm):
 
 @cli.command()
 @click.argument("deployment")
-@click.option("-t", "--target", default="default")
 @click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
 @click.option("-k", "--ssl-keys", required=True)
-def create(deployment, ssl_keys, target, prefix):
-    path = os.path.join(prefix, target)
+def create(deployment, ssl_keys, prefix):
+    path = os.path.join(prefix, deployment)
     if os.path.exists(path):
         print(f"There's an existing deployment at {path}. Skipping.")
     else:
         os.makedirs(os.path.join(path, "manifests"))
+        secret_path = os.path.join(path, "manifests", "secret.json")
+        ingress_path = os.path.join(path, "manifests", "ingress.json")
 
         secret = Secret(deployment,
-                        key=os.path.join(ssl_keys, "key.pem"),
-                        crt=os.path.join(ssl_keys, "cert.pem")
+                        crt=os.path.join(ssl_keys, "cert.pem"),
+                        key=os.path.join(ssl_keys, "key.pem")
                         )
-
-        with open(os.path.join(path, "manifests", "secret.json"), "w") as secret_spec:
-            secret_spec.write(secret.to_json(indent=4))
 
         ingress = Ingress(deployment)
 
-        with open(os.path.join(path, "manifests", "ingress.json"), "w") as ingress_spec:
+        with open(secret_path, "w") as secret_spec:
+            secret_spec.write(secret.to_json(indent=4))
+
+        with open(ingress_path, "w") as ingress_spec:
             ingress_spec.write(ingress.to_json(indent=4))
+
+        # apply!
+        _cmd(f"kubectl apply -f {secret_path}")
+        _cmd(f"kubectl apply -f {ingress_path}")
 
 
 @cli.command()
 @click.argument("name")
 @click.argument("deployment")
 @click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
-@click.option("-t", "--target", default="default")
 @click.option("-c", "--config", default=None)
 @click.option("-T", "--template", default=RTK_CONF_TEMPLATE)
-def add(name, deployment, prefix, target, config, template):
+def add(name, deployment, prefix, config, template):
 
     splunk_info = {"username": os.getenv("SPLUNK_USERNAME", ""),
                    "password": os.getenv("SPLUNK_USERNAME", ""),
@@ -122,7 +143,7 @@ def add(name, deployment, prefix, target, config, template):
     elif config.endswith(".yml") or config.endswith(".yaml"):
         config = yaml.load(open(config), yaml.SafeLoader)
 
-    registry = os.path.join(prefix, target, "registry")
+    registry = os.path.join(prefix, deployment, "registry")
 
     if not os.path.exists(registry):
         os.makedirs(registry)
@@ -135,17 +156,15 @@ def add(name, deployment, prefix, target, config, template):
         with open(config_path, "w") as config_file:
             config_file.write(json.dumps(config, indent=4))
 
-        _update(deployment, target, prefix)
-
 
 @cli.command()
 @click.argument("name")
 @click.argument("deployment")
 @click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
-@click.option("-t", "--target", default="default")
 @click.option("-T", "--templates", default=RTK_SVC_TEMPLATE)
-def deploy(name, deployment, target, prefix, templates):
-    root = os.path.join(prefix, target)
+def deploy(name, deployment, prefix, templates):
+    root = os.path.join(prefix, deployment)
+    src_path = os.path.join(prefix, deployment, "src", name)
     conf_path = os.path.join(root, "registry", name+".json")
 
     print(f"Building {name} for {deployment}...")
@@ -153,13 +172,18 @@ def deploy(name, deployment, target, prefix, templates):
         raise FileNotFoundError(f"Cannot find an initialised rtk8s deployment at {root}.")
     elif not os.path.exists(conf_path):
         raise FileNotFoundError(f"Cannot find a valid config for {name} at {conf_path}.")
+    elif os.path.exists(src_path):
+        for component in ["app", "proxy"]:
+
+            print(os.path.join(src_path, component, "manifests"))
+            for root, dirs, files in os.walk(os.path.join(src_path, component, "manifests")):
+                for file in files:
+                    _cmd(f"kubectl apply -f {os.path.join(root, file)}")
     else:
         with open(conf_path) as conf_file:
             config = json.load(conf_file)
 
             name = config["app"]["name"]
-
-            src_path = os.path.join(prefix, target, "src", name)
 
             render_project(templates, src_path, config)
 
@@ -167,7 +191,7 @@ def deploy(name, deployment, target, prefix, templates):
                 component = os.path.split(root)[-1]
                 for file in files:
                     if file == "Dockerfile":
-                        _cmd(f"docker build {src_path} -t {name}-{component}:latest -f Dockerfile")
+                        _cmd(f"docker build {src_path} -t {name}-{component}:latest -f {src_path}/{component}/Dockerfile")
 
                         repo_host = config["app"].get("deployment", {}).get("repo", "localhost:32000")
                         if repo_host.startswith("localhost"):
@@ -176,12 +200,15 @@ def deploy(name, deployment, target, prefix, templates):
                             docker tag ${dir%/} gcr.io/encoded-antler-258511/${dir%/}
                             docker push gcr.io/encoded-antler-258511/${dir%/}
                             """
-                            _cmd(f"docker tag {name}-{component} {repo_host}/{name}-{component}")
-                            _cmd(f"docker push {repo_host}/{name}-{component}")
+                        _cmd(f"docker tag {name}-{component} {repo_host}/{name}-{component}")
+                        _cmd(f"docker push {repo_host}/{name}-{component}")
 
-            for root, dirs, files in os.walk(os.path.join(src_path, "manifests")):
-                for file in files:
-                    _cmd(f"kubectl apply -f {file}")
+            for component in ["app", "proxy"]:
+                for root, dirs, files in os.walk(os.path.join(src_path, component, "manifests")):
+                    for file in files:
+                        _cmd(f"kubectl apply -f {os.path.join(root, file)}")
+
+    _update(deployment, prefix)
 
     print(f"Built {name} for {deployment}. Your service will be available shortly at '/{name}-app'")
 
@@ -190,9 +217,9 @@ def deploy(name, deployment, target, prefix, templates):
 @click.argument("name")
 @click.argument("deployment")
 @click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
-@click.option("-t", "--target", default="default")
-def remove(name, deployment, target, prefix):
-    root = os.path.join(prefix, target)
+@click.option("--clean-all", is_flag=True)
+def remove(name, deployment, prefix, clean_all):
+    root = os.path.join(prefix, deployment)
     conf_path = os.path.join(root, "registry", name + ".json")
     src_path = os.path.join(root, "src", name)
 
@@ -205,14 +232,21 @@ def remove(name, deployment, target, prefix):
                                 f"Got a valid registry file, but no src at {src_path}. Aborting.")
     else:
 
-        for root, dirs, files in os.walk(os.path.join(src_path, "manifests")):
-            for file in files:
-                _cmd(f"kubectl delete -f {file}")
+        for component in ["app", "proxy"]:
+            manifests = os.path.join(src_path, component, "manifests")
 
-        os.unlink(conf_path)
+            if len(os.listdir(manifests)) != 0:
+                for root, dirs, files in os.walk(manifests):
+                    for file in files:
+                        _cmd(f"kubectl delete -f {os.path.join(root, file)}")
+
+        if clean_all:
+            print("Removing config...")
+            os.unlink(conf_path)
+
         shutil.rmtree(src_path)
 
-        _update(deployment, target, prefix)
+        _update(deployment, prefix)
 
 
 if __name__ == "__main__":

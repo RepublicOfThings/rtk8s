@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: {{ app.name }}-proxy
-        image: {{ app.deployment.repo }}/proxy
+        image: {{ app.deployment.repo }}/{{ app.name}}-proxy
         ports:
           - containerPort: 5000
         env:
