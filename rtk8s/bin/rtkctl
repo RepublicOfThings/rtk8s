@@ -15,6 +15,7 @@ TEMPLATES_ROOT = pkg_resources.resource_filename("rtk8s", "templates")
 
 V1_ROOT = os.path.join(TEMPLATES_ROOT, "v1")
 
+KUBECTL = os.getenv("KUBECTL", "kubectl")
 RTK_APP_DIR = ".rtk8s_apps/v1/"
 RTK_SVC_TEMPLATE = os.path.join(V1_ROOT, "service/")
 RTK_CONF_TEMPLATE = os.path.join(V1_ROOT, "spec/config.yml")
@@ -49,7 +50,7 @@ def _update(deployment, prefix):
         ingress_spec.write(ingress.to_json(indent=4))
 
     # secret_path = os.path.join(path, "manifests", "secret.json")
-    _cmd(f"kubectl apply -f {ingress_path}")
+    _cmd(f"{KUBECTL} apply -f {ingress_path}")
 
 
 @click.group()
@@ -81,16 +82,16 @@ def delete(target, prefix, confirm):
             print(f"Deleting '{name}'...")
             cdir = os.path.join(root, "src", name, "app", "manifests")
             for file in os.listdir(os.path.join(root, "src", name, "app", "manifests")):
-                _cmd(f"kubectl delete -f {os.path.join(cdir, file)}")
+                _cmd(f"{KUBECTL} delete -f {os.path.join(cdir, file)}")
 
             cdir = os.path.join(root, "src", name, "proxy", "manifests")
             for file in os.listdir(cdir):
-                _cmd(f"kubectl delete -f {os.path.join(cdir, file)}")
+                _cmd(f"{KUBECTL} delete -f {os.path.join(cdir, file)}")
 
         print("Deleting ingress...")
         cdir = os.path.join(root, "manifests")
         for file in os.listdir(cdir):
-            _cmd(f"kubectl delete -f {os.path.join(cdir, file)}")
+            _cmd(f"{KUBECTL} delete -f {os.path.join(cdir, file)}")
 
         print("Cleaning directories...")
         shutil.rmtree(root)
@@ -125,8 +126,8 @@ def create(deployment, ssl_keys, prefix):
             ingress_spec.write(ingress.to_json(indent=4))
 
         # apply!
-        _cmd(f"kubectl apply -f {secret_path}")
-        _cmd(f"kubectl apply -f {ingress_path}")
+        _cmd(f"{KUBECTL} apply -f {secret_path}")
+        _cmd(f"{KUBECTL} apply -f {ingress_path}")
 
 
 @cli.command()
@@ -195,7 +196,7 @@ def deploy(name, deployment, prefix, templates, rebuild):
                 os.path.join(src_path, component, "manifests")
             ):
                 for file in files:
-                    _cmd(f"kubectl apply -f {os.path.join(root, file)}")
+                    _cmd(f"{KUBECTL} apply -f {os.path.join(root, file)}")
     else:
         with open(conf_path) as conf_file:
             config = json.load(conf_file)
@@ -233,7 +234,7 @@ def deploy(name, deployment, prefix, templates, rebuild):
                     os.path.join(src_path, component, "manifests")
                 ):
                     for file in files:
-                        _cmd(f"kubectl apply -f {os.path.join(root, file)}")
+                        _cmd(f"{KUBECTL} apply -f {os.path.join(root, file)}")
 
     _update(deployment, prefix)
 
@@ -273,7 +274,7 @@ def remove(name, deployment, prefix, clean_all):
             if len(os.listdir(manifests)) != 0:
                 for root, dirs, files in os.walk(manifests):
                     for file in files:
-                        _cmd(f"kubectl delete -f {os.path.join(root, file)}")
+                        _cmd(f"{KUBECTL} delete -f {os.path.join(root, file)}")
 
         if clean_all:
             print("Removing config...")
