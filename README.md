@@ -9,7 +9,11 @@ defines security and routing for these apps. If you can see `.rtk8s_apps/v1/smei
 You'll need to have `kubectl` installed to get started. To check if this is installed, run 
 `kubectl config current-context ` in your shell. This should return `...`
 
-Next you can 
+## Creating a `deployment`
+
+Before starting, you may need to create 
+
+### 0.  
 
 ## Deploying an Application
 

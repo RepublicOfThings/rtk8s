@@ -15,6 +15,7 @@ TEMPLATES_ROOT = pkg_resources.resource_filename("rtk8s", "templates")
 
 V1_ROOT = os.path.join(TEMPLATES_ROOT, "v1")
 
+RTK_APP_DIR = ".rtk8s_apps/v1/"
 RTK_SVC_TEMPLATE = os.path.join(V1_ROOT, "service/")
 RTK_CONF_TEMPLATE = os.path.join(V1_ROOT, "spec/config.yml")
 
@@ -58,7 +59,7 @@ def cli():
 
 @cli.command()
 @click.argument("target")
-@click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
+@click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("-c", "--confirm", default=True)
 def delete(target, prefix, confirm):
     """Delete a target deployment. This will remove _all_ apps associated with this deployment, including metadata."""
@@ -98,7 +99,7 @@ def delete(target, prefix, confirm):
 
 @cli.command()
 @click.argument("deployment")
-@click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
+@click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("-k", "--ssl-keys", required=True)
 def create(deployment, ssl_keys, prefix):
     path = os.path.join(prefix, deployment)
@@ -131,7 +132,7 @@ def create(deployment, ssl_keys, prefix):
 @cli.command()
 @click.argument("name")
 @click.argument("deployment")
-@click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
+@click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("-c", "--config", default=None)
 @click.option("-T", "--template", default=RTK_CONF_TEMPLATE)
 def add(name, deployment, prefix, config, template):
@@ -171,7 +172,7 @@ def add(name, deployment, prefix, config, template):
 @cli.command()
 @click.argument("name")
 @click.argument("deployment")
-@click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
+@click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("-T", "--templates", default=RTK_SVC_TEMPLATE)
 @click.option("--rebuild", is_flag=True)
 def deploy(name, deployment, prefix, templates, rebuild):
@@ -244,7 +245,7 @@ def deploy(name, deployment, prefix, templates, rebuild):
 @cli.command()
 @click.argument("name")
 @click.argument("deployment")
-@click.option("-p", "--prefix", default=".rtk8s_apps/v1/")
+@click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("--clean-all", is_flag=True)
 def remove(name, deployment, prefix, clean_all):
     root = os.path.join(prefix, deployment)
