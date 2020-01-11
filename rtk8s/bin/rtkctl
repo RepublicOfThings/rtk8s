@@ -29,7 +29,7 @@ def _pod_identifiers(name, suffixes=("-app", "-proxy-app")):
         suffixes = ("", )
 
     for suffix in suffixes:
-        names = subprocess.Popen("kubectl get pods --all-namespaces".split(), stdout=subprocess.PIPE)
+        names = subprocess.Popen(f"{KUBECTL} get pods --all-namespaces".split(), stdout=subprocess.PIPE)
         matches = subprocess.Popen(('grep', f'{name}{suffix}'), stdin=names.stdout, stdout=subprocess.PIPE)
         filtered = subprocess.Popen(('awk', "{print $2}"), stdin=matches.stdout, stdout=subprocess.PIPE)
         names.stdout.close()
