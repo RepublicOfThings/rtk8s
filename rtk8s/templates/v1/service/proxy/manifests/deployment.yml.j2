@@ -22,6 +22,11 @@ spec:
 
         imagePullPolicy: Always
 
+        resources:
+          requests:
+             cpu: "0.50"
+             memory: "128Mi"
+
         readinessProbe:
           httpGet:
             path: /{{ app.name }}-proxy/ping

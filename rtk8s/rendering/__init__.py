@@ -32,7 +32,7 @@ def render_project(templates, target, config, markers=(".j2",), overwrite=False)
                             dst_file.write(s)
                     else:
                         print(f"Skipping {dst} - it already exists!")
-                        
+
             elif os.path.exists(os.path.join(dst_path, file)):
                 print(f"Skipping {dst} - it already exists!")
             else:
