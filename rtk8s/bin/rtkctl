@@ -194,7 +194,7 @@ def add(name, deployment, prefix, config, template):
 @click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("-T", "--templates", default=RTK_SVC_TEMPLATE)
 @click.option("-R", "--rebuild", is_flag=True)
-@click.option("-O", "--overwrite", is_flag=False)
+@click.option("-O", "--overwrite", is_flag=True)
 def deploy(name, deployment, prefix, templates, rebuild, overwrite):
     root = os.path.join(prefix, deployment)
     src_path = os.path.join(prefix, deployment, "src", name)
