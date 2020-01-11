@@ -258,6 +258,7 @@ def deploy(name, deployment, prefix, templates, rebuild, overwrite):
     _update(deployment, prefix)
 
     if rebuild:
+        print("Deleting legacy pods...")
         # this forces the cluster to use the most recent image -- they will respawn after being deleted.
         for pod in _pod_identifiers(name):
             _cmd(f"{KUBECTL} delete pods {pod}")
