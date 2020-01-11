@@ -21,6 +21,24 @@ RTK_SVC_TEMPLATE = os.path.join(V1_ROOT, "service/")
 RTK_CONF_TEMPLATE = os.path.join(V1_ROOT, "spec/config.yml")
 
 
+def _pod_identifiers(name, suffixes=("-app", "-proxy-app")):
+
+    ids = []
+
+    if len(suffixes) == 0:
+        suffixes = ("", )
+
+    for suffix in suffixes:
+        names = subprocess.Popen("kubectl get pods --all-namespaces".split(), stdout=subprocess.PIPE)
+        matches = subprocess.Popen(('grep', f'{name}{suffix}'), stdin=names.stdout, stdout=subprocess.PIPE)
+        filtered = subprocess.Popen(('awk', "{print $2}"), stdin=matches.stdout, stdout=subprocess.PIPE)
+        names.stdout.close()
+        target = filtered.communicate()[0].decode("utf-8").replace("\n", "")
+        ids.append(target)
+
+    return ids
+
+
 def _cmd(s):
     """Execute a given command."""
     try:
@@ -175,8 +193,9 @@ def add(name, deployment, prefix, config, template):
 @click.argument("deployment")
 @click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("-T", "--templates", default=RTK_SVC_TEMPLATE)
-@click.option("--rebuild", is_flag=True)
-def deploy(name, deployment, prefix, templates, rebuild):
+@click.option("-R", "--rebuild", is_flag=True)
+@click.option("-O", "--overwrite", is_flag=False)
+def deploy(name, deployment, prefix, templates, rebuild, overwrite):
     root = os.path.join(prefix, deployment)
     src_path = os.path.join(prefix, deployment, "src", name)
     conf_path = os.path.join(root, "registry", name + ".json")
@@ -203,7 +222,7 @@ def deploy(name, deployment, prefix, templates, rebuild):
 
             name = config["app"]["name"]
 
-            render_project(templates, src_path, config)
+            render_project(templates, src_path, config, overwrite=overwrite)
 
             for root, dirs, files in os.walk(src_path):
                 component = os.path.split(root)[-1]
@@ -237,6 +256,11 @@ def deploy(name, deployment, prefix, templates, rebuild):
                         _cmd(f"{KUBECTL} apply -f {os.path.join(root, file)}")
 
     _update(deployment, prefix)
+
+    if rebuild:
+        # this forces the cluster to use the most recent image -- they will respawn after being deleted.
+        for pod in _pod_identifiers(name):
+            _cmd(f"{KUBECTL} delete pods {pod}")
 
     print(
         f"Built {name} for {deployment}. Your service will be available shortly at '/{name}-app'"
