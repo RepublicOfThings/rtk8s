@@ -68,6 +68,11 @@ To create a new deployment
 
 `microk8s.start`
 
+```bash
+export PATH="$HOME/.pyenv/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+```
 
 ## Other Info
 

@@ -16,7 +16,7 @@ TEMPLATES_ROOT = pkg_resources.resource_filename("rtk8s", "templates")
 V1_ROOT = os.path.join(TEMPLATES_ROOT, "v1")
 
 KUBECTL = os.getenv("KUBECTL", "kubectl")
-RTK_APP_DIR = ".rtk8s_apps/v1/"
+RTK_APP_DIR = "rtk8s_apps/v1/"
 RTK_SVC_TEMPLATE = os.path.join(V1_ROOT, "service/")
 RTK_CONF_TEMPLATE = os.path.join(V1_ROOT, "spec/config.yml")
 
