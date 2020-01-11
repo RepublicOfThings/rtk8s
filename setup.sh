@@ -10,6 +10,7 @@ curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer 
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
+pyenv rehash
 
 exec $SHELL
 
@@ -31,7 +32,9 @@ sudo usermod -aG docker $USER
 
 sudo snap install microk8s --classic --channel=1.14/stable
 sudo microk8s.status --wait-ready
-sudo microk8s.enable dns dashboard registry
+sudo microk8s.enable dns dashboard registry ingress
 alias kubectl='microk8s.kubectl'
 sudo usermod -aG microk8s.kubectl $USER
 sudo usermod -aG kubectl $USER
+
+export KUBECTL=microk8s.kubectl

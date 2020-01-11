@@ -2,7 +2,7 @@ version: "beta"
 
 app:
   name: "demo"
-  host: "35.186.244.102"
+  host: "34.70.106.1"
   port: "80"
   scheme: "https"
 
@@ -28,4 +28,4 @@ app:
       - "app/content/republic.css"
 
   deployment:
-    repo: "gcr.io/encoded-antler-258511"
+    repo: "localhost:32000"

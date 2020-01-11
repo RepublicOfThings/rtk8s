@@ -16,6 +16,7 @@ def render_project(templates, target, config, markers=(".j2",), overwrite=False)
 
             src = os.path.join(root, file)
             dst_path = os.path.join(target, root.replace(templates, ""))
+            dst = os.path.join(dst_path, file)
 
             if not os.path.exists(dst_path):
                 os.makedirs(dst_path)
@@ -31,9 +32,10 @@ def render_project(templates, target, config, markers=(".j2",), overwrite=False)
                             dst_file.write(s)
                     else:
                         print(f"Skipping {dst} - it already exists!")
-
+                        
+            elif os.path.exists(os.path.join(dst_path, file)):
+                print(f"Skipping {dst} - it already exists!")
             else:
-                dst = os.path.join(dst_path, file)
                 shutil.copy2(src, dst)
 
 
