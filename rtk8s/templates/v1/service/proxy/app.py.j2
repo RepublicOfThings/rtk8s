@@ -1,8 +1,11 @@
 import os
 import requests
-
+import logging
 from werkzeug.routing import Rule
 from flask import Flask, request, Response, redirect, url_for, render_template
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 SUBPATH = "/{{ app.name }}-proxy"
@@ -14,7 +17,7 @@ SPLUNK_BASE_URL = "{{ app.splunk.scheme }}://{{ app.splunk.host }}:{{ app.splunk
 DASHBOARDS = {{ app.dashboards }}
 
 app = Flask(__name__)
-
+LOGGER = app.logger
 
 app.url_rule_class = lambda path, **options: Rule(SUBPATH + path, **options)
 
@@ -90,10 +93,12 @@ def login():
         "password": SPLUNK_PASSWORD
     }
 
+    LOGGER.debug("Logging in...")
     response = session.get(f"{SPLUNK_BASE_URL}/en-US/account/insecurelogin", params=args)
-
+    LOGGER.debug("Done!")
     if response.status_code == 200:
-        return redirect(f"https://{{ app.host }}/{SUBPATH}/en-US/{return_to}")
+        LOGGER.debug(f"Redirecting to: https://{{ app.host }}{SUBPATH}/en-US/{return_to}")
+        return redirect(f"https://{{ app.host }}{SUBPATH}/en-US/{return_to}")
     else:
         return redirect(url_for("error", message=response.content, status=response.status_code, _scheme="https", _external=True))
 

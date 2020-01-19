@@ -2,7 +2,7 @@ version: "beta"
 
 app:
   name: "demo"
-  host: "34.70.106.1"
+  host: "localhost"
   port: "80"
   scheme: "https"
 
