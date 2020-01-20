@@ -79,7 +79,7 @@ def cli():
 
 @cli.command()
 def version():
-    return __version__
+    print(__version__)
 
 
 @cli.command()
