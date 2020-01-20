@@ -8,6 +8,7 @@ import pkg_resources
 
 import click
 
+from rtk8s import __version__
 from rtk8s.rendering import render_project, render_string
 from rtk8s.objects import Secret, Ingress
 
@@ -74,6 +75,11 @@ def _update(deployment, prefix):
 @click.group()
 def cli():
     pass
+
+
+@cli.command()
+def version():
+    return __version__
 
 
 @cli.command()
