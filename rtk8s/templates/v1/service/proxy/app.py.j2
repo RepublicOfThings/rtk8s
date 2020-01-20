@@ -38,6 +38,9 @@ def proxy(path: str):
         if path.endswith("dashboard.js"):
             data = data.replace('make_url("/static/build/pages/enterprise")',
                                 f'"{SUBPATH}" + make_url("/static/build/pages/enterprise")')
+        if path.endswith("common.js"):
+            data = data.replace('splunkUtil.make_url',
+                                f'"{SUBPATH}" + splunkUtil.make_url')
 
     except UnicodeDecodeError:
         data = session.get(
