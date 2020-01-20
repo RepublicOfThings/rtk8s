@@ -27,11 +27,11 @@ spec:
             path: /{{ app.name }}-app/ping
             port: 5000
           initialDelaySeconds: 5
-          periodSeconds: 5
+          periodSeconds: 15
 
         livenessProbe:
           httpGet:
             path: /{{ app.name }}-app/ping
             port: 5000
           initialDelaySeconds: 5
-          periodSeconds: 5
+          periodSeconds: 15
