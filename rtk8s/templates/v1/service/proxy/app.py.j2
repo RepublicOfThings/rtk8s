@@ -48,7 +48,7 @@ def proxy(path: str):
         ).content
 
     if path.endswith(".js"):
-        return Response(data, mimetype="text/javascript"), headers={"content-length": len(data)}
+        return Response(data, mimetype="text/javascript", headers={"content-length": len(data)})
     elif path.endswith(".css"):
         return Response(data, mimetype="text/css", headers={"content-length": len(data)})
     elif path.endswith(".html"):
