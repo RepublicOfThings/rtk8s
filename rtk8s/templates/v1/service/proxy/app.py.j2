@@ -29,7 +29,6 @@ session = requests.Session()
 def proxy(path: str):
 
     try:
-        app.logger.debug(SPLUNK_BASE_URL)
         data = session.get(
             f"{SPLUNK_BASE_URL}/en-US/{path}", params=request.args
         ).content
@@ -40,9 +39,8 @@ def proxy(path: str):
                                 f'"{SUBPATH}" + make_url("/static/build/pages/enterprise")')
 
         if path.endswith("common.js"):
-            pass
-            # data = data.replace('splunkUtil.make_url',
-            #                     f'"{SUBPATH}" + splunkUtil.make_url')
+            data = data.replace('splunkUtil.make_url',
+                                f'"{SUBPATH}" + splunkUtil.make_url')
 
     except UnicodeDecodeError:
         data = session.get(
