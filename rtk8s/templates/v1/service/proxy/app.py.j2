@@ -38,9 +38,11 @@ def proxy(path: str):
         if path.endswith("dashboard.js"):
             data = data.replace('make_url("/static/build/pages/enterprise")',
                                 f'"{SUBPATH}" + make_url("/static/build/pages/enterprise")')
+
         if path.endswith("common.js"):
-            data = data.replace('splunkUtil.make_url',
-                                f'"{SUBPATH}" + splunkUtil.make_url')
+            pass
+            # data = data.replace('splunkUtil.make_url',
+            #                     f'"{SUBPATH}" + splunkUtil.make_url')
 
     except UnicodeDecodeError:
         data = session.get(
@@ -103,7 +105,8 @@ def login():
         LOGGER.debug(f"Redirecting to: https://{{ app.host }}{SUBPATH}/en-US/{return_to}")
         return redirect(f"https://{{ app.host }}{SUBPATH}/en-US/{return_to}")
     else:
-        return redirect(url_for("error", message=response.content, status=response.status_code, _scheme="https", _external=True))
+        return redirect(url_for("error", message=response.content,
+                        status=response.status_code, _scheme="https", _external=True))
 
 
 @app.route("/ping")
