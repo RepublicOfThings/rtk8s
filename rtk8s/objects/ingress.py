@@ -2,7 +2,7 @@ import json
 
 
 class Ingress:
-    def __init__(self, name, namespace="default", paths=None):
+    def __init__(self, name, namespace="default", paths=None, host="localhost"):
         paths = paths or []
         self._name = name
         self._data = {
@@ -17,8 +17,8 @@ class Ingress:
                 },
             },
             "spec": {
-                "tls": [{"secretName": "smeiling-tls"}],
-                "rules": [{"http": {"paths": [*self._build_rules(paths)]}}],
+                "tls": [{"secretName": "smeiling-tls", "hosts": [host]}],
+                "rules": [{"host": host, "http": {"paths": [*self._build_rules(paths)]}}],
             },
         }
 

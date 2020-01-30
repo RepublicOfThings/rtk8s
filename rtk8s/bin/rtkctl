@@ -48,7 +48,7 @@ def _cmd(s):
         raise IOError(f"Failed to execute command '{s}'. Aborting.")
 
 
-def _update(deployment, prefix):
+def _update(deployment, prefix, host):
     """Update the target deployment."""
 
     path = os.path.join(prefix, deployment)
@@ -63,7 +63,7 @@ def _update(deployment, prefix):
                     paths.append(subpath + "-" + component)
 
     ingress_path = os.path.join(path, "manifests", "ingress.json")
-    ingress = Ingress(deployment, paths=paths)
+    ingress = Ingress(deployment, paths=paths, host=host)
 
     with open(ingress_path, "w") as ingress_spec:
         ingress_spec.write(ingress.to_json(indent=4))
@@ -261,7 +261,7 @@ def deploy(name, deployment, prefix, templates, rebuild, overwrite):
                     for file in files:
                         _cmd(f"{KUBECTL} apply -f {os.path.join(root, file)}")
 
-    _update(deployment, prefix)
+    _update(deployment, prefix, config["app"]["host"])
 
     if rebuild:
         print("Deleting legacy pods...")
@@ -313,7 +313,7 @@ def remove(name, deployment, prefix, clean_all):
 
         shutil.rmtree(src_path)
 
-        _update(deployment, prefix)
+        _update(deployment, prefix, "unknown")
 
 
 if __name__ == "__main__":
