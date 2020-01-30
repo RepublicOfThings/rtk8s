@@ -10,4 +10,6 @@ COPY /proxy /app
 
 WORKDIR /app
 
-ENTRYPOINT ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--log-level=info", "--threads=1", "--workers=1", "--timeout=30"]
+# ENTRYPOINT ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--log-level=info", "--threads=1", "--workers=1", "--timeout=30"]
+
+ENTRYPOINT ["python", "app.py"]
