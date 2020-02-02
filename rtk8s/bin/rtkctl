@@ -48,7 +48,7 @@ def _cmd(s):
         raise IOError(f"Failed to execute command '{s}'. Aborting.")
 
 
-def _update(deployment, prefix, host):
+def _update(deployment, prefix):
     """Update the target deployment."""
 
     path = os.path.join(prefix, deployment)
@@ -63,12 +63,13 @@ def _update(deployment, prefix, host):
                     paths.append(subpath + "-" + component)
 
     ingress_path = os.path.join(path, "manifests", "ingress.json")
-    ingress = Ingress(deployment, paths=paths, host=host)
+    settings_path = os.path.join(path, "conf", "settings.json")
+    settings = json.load(open(settings_path))
+    ingress = Ingress(deployment, paths=paths, host=settings["host"])
 
     with open(ingress_path, "w") as ingress_spec:
         ingress_spec.write(ingress.to_json(indent=4))
 
-    # secret_path = os.path.join(path, "manifests", "secret.json")
     _cmd(f"{KUBECTL} apply -f {ingress_path}")
 
 
@@ -85,8 +86,8 @@ def version():
 @cli.command()
 @click.argument("target")
 @click.option("-p", "--prefix", default=RTK_APP_DIR)
-@click.option("-c", "--confirm", default=True)
-def delete(target, prefix, confirm):
+@click.option("-y", is_flag=True)
+def delete(target, prefix, y):
     """Delete a target deployment. This will remove _all_ apps associated with this deployment, including metadata."""
     root = os.path.join(prefix, target)
     if not os.path.exists(root):
@@ -95,22 +96,23 @@ def delete(target, prefix, confirm):
         )
 
     elif (
-        confirm
-        and input(f"Are you sure you want to delete the deployment at {root}? Y/n")
+        y
+        or input(f"Are you sure you want to delete the deployment at {root}? Y/n")
         == "Y"
     ):
 
-        print("Deleting apps...")
-        for app in os.listdir(os.path.join(root, "registry")):
-            name = os.path.splitext(app)[0]
-            print(f"Deleting '{name}'...")
-            cdir = os.path.join(root, "src", name, "app", "manifests")
-            for file in os.listdir(os.path.join(root, "src", name, "app", "manifests")):
-                _cmd(f"{KUBECTL} delete -f {os.path.join(cdir, file)}")
+        if os.path.exists(os.path.join(root, "registry")):
+            print("Deleting apps...")
+            for app in os.listdir(os.path.join(root, "registry")):
+                name = os.path.splitext(app)[0]
+                print(f"Deleting '{name}'...")
+                cdir = os.path.join(root, "src", name, "app", "manifests")
+                for file in os.listdir(os.path.join(root, "src", name, "app", "manifests")):
+                    _cmd(f"{KUBECTL} delete -f {os.path.join(cdir, file)}")
 
-            cdir = os.path.join(root, "src", name, "proxy", "manifests")
-            for file in os.listdir(cdir):
-                _cmd(f"{KUBECTL} delete -f {os.path.join(cdir, file)}")
+                cdir = os.path.join(root, "src", name, "proxy", "manifests")
+                for file in os.listdir(cdir):
+                    _cmd(f"{KUBECTL} delete -f {os.path.join(cdir, file)}")
 
         print("Deleting ingress...")
         cdir = os.path.join(root, "manifests")
@@ -126,7 +128,14 @@ def delete(target, prefix, confirm):
 @click.argument("deployment")
 @click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("-k", "--ssl-keys", required=True)
-def create(deployment, ssl_keys, prefix):
+@click.option("-c", "--config")
+@click.option("-h", "--host")
+def create(deployment, ssl_keys, prefix, config, host):
+    """Create a new deployment."""
+
+    if config is None and host is None:
+        raise ValueError("You must either set the hostname or provide a configuration file for your deployment.")
+
     path = os.path.join(prefix, deployment)
     if os.path.exists(path):
         print(f"There's an existing deployment at {path}. Skipping.")
@@ -151,7 +160,19 @@ def create(deployment, ssl_keys, prefix):
 
         # apply!
         _cmd(f"{KUBECTL} apply -f {secret_path}")
-        _cmd(f"{KUBECTL} apply -f {ingress_path}")
+
+        # don't apply this yet -- fails as there's no paths provided at this time.
+        # _cmd(f"{KUBECTL} apply -f {ingress_path}")
+
+        os.makedirs(os.path.join(path, "conf"))
+        settings_path = os.path.join(path, "conf", "settings.json")
+
+        settings = {
+            "host": host or config["host"]
+        }
+
+        with open(settings_path, "w") as settings_file:
+            settings_file.write(json.dumps(settings, indent=4))
 
 
 @cli.command()
@@ -159,8 +180,10 @@ def create(deployment, ssl_keys, prefix):
 @click.argument("deployment")
 @click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("-c", "--config", default=None)
+@click.option("-r", "--repository", default="localhost:32000")
 @click.option("-T", "--template", default=RTK_CONF_TEMPLATE)
-def add(name, deployment, prefix, config, template):
+def add(name, deployment, prefix, config, repository, template):
+    """Add a new app to a deployment."""
 
     splunk_info = {
         "username": os.getenv("SPLUNK_USERNAME", ""),
@@ -171,10 +194,13 @@ def add(name, deployment, prefix, config, template):
 
     if not config:
         app_info = {"host": os.getenv("SMEILING_HOST", ""), "name": name}
+
         data = render_string(
-            open(template).read(), {"app": app_info, "splunk": splunk_info}
+            open(template).read(), {"app": app_info, "splunk": splunk_info, "repository": repository}
         )
+
         config = yaml.load(io.StringIO(data), yaml.SafeLoader)
+
     elif config.endswith(".json"):
         config = json.load(open(config))
     elif config.endswith(".yml") or config.endswith(".yaml"):
@@ -202,6 +228,8 @@ def add(name, deployment, prefix, config, template):
 @click.option("-R", "--rebuild", is_flag=True)
 @click.option("-O", "--overwrite", is_flag=True)
 def deploy(name, deployment, prefix, templates, rebuild, overwrite):
+    """Deploy an app."""
+
     root = os.path.join(prefix, deployment)
     src_path = os.path.join(prefix, deployment, "src", name)
     conf_path = os.path.join(root, "registry", name + ".json")
@@ -241,7 +269,7 @@ def deploy(name, deployment, prefix, templates, rebuild, overwrite):
                         repo_host = (
                             config["app"]
                             .get("deployment", {})
-                            .get("repo", "localhost:32000")
+                            .get("dockerRepo", "localhost:32000")
                         )
                         if repo_host.startswith("localhost"):
                             """
@@ -261,12 +289,13 @@ def deploy(name, deployment, prefix, templates, rebuild, overwrite):
                     for file in files:
                         _cmd(f"{KUBECTL} apply -f {os.path.join(root, file)}")
 
-    _update(deployment, prefix, config["app"]["host"])
+    _update(deployment, prefix)
 
     if rebuild:
         print("Deleting legacy pods...")
         # this forces the cluster to use the most recent image -- they will respawn after being deleted.
         for pod in _pod_identifiers(name):
+            print(pod)
             _cmd(f"{KUBECTL} delete pods {pod}")
 
     print(
@@ -280,6 +309,7 @@ def deploy(name, deployment, prefix, templates, rebuild, overwrite):
 @click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("--clean-all", is_flag=True)
 def remove(name, deployment, prefix, clean_all):
+    """Remove an app from the deployment."""
     root = os.path.join(prefix, deployment)
     conf_path = os.path.join(root, "registry", name + ".json")
     src_path = os.path.join(root, "src", name)
@@ -313,7 +343,7 @@ def remove(name, deployment, prefix, clean_all):
 
         shutil.rmtree(src_path)
 
-        _update(deployment, prefix, "unknown")
+        _update(deployment, prefix)
 
 
 if __name__ == "__main__":

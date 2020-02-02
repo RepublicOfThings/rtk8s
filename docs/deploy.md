@@ -76,6 +76,76 @@ You may want to remove your app from the cluster. `RTK8S` supports two main uses
 
 _Note that all actions are irreversible_.
 
+## Adding and Removing Users
+
+You can add and remove users from a specific application quite easily.
+
+To add a new user _to an existing app_, simply go to `rtk8s_apps/v1/smeiling/registry` and open the config file for your
+app (e.g. `{app-name}.json`). Under the credentials field, add a new entry with a `username` and `password`. For example,
+if I had the following config:
+
+```json
+{
+  "credentials": [
+    {
+      "username": "bob",
+      "password": "thebuilder"
+    }
+  ]
+}
+```
+
+I could add the users `bill` and `ben` as:
+
+```json
+{
+  "credentials": [
+    {
+      "username": "bob",
+      "password": "thebuilder"
+    },
+    {
+      "username": "bill",
+      "password": "flower"
+    },
+    {
+      "username": "ben",
+      "password": "potmen"
+    }
+  ]
+}
+```
+
+To propagate these changes, you'll need to reset the app with:
+
+```bash
+rtkctl remove {app-name} smeiling
+```
+
+Followed by:
+
+```bash
+rtkctl deploy {app-name} smeiling --rebuild
+```
+
+After a few moments the users should be added to the application.
+
+### Removing Users
+
+To remove a user, simply remove their entry from the `credentials` field of the config file, and run:
+
+```bash
+rtkctl remove {app-name} smeiling
+```
+
+Followed by:
+
+```bash
+rtkctl deploy {app-name} smeiling --rebuild
+```
+
+After a few moments the users should not have access to the application.
+
 ## Example Config File
 
 This is a simple example of an app config file:
@@ -88,6 +158,10 @@ app:
   host: "34.70.106.1"
   port: "80"
   scheme: "https"
+
+  credentials:
+    - username: "bob"
+      password: "thebuilder"
 
   dashboards:
     Vodafone:

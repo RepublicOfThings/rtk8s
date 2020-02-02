@@ -1,6 +1,8 @@
 include rtk8s/templates/v1/spec/config.yml
+include rtk8s/templates/v1/service/app/models.py
 include rtk8s/templates/v1/service/app/app.py.j2
 include rtk8s/templates/v1/service/app/Dockerfile
+include rtk8s/templates/v1/service/app/utils.py.j2
 include rtk8s/templates/v1/service/app/static/content/republic.css
 include rtk8s/templates/v1/service/app/static/img/logos/smeiling.png
 include rtk8s/templates/v1/service/app/static/img/logos/republic.png
@@ -10,6 +12,8 @@ include rtk8s/templates/v1/service/app/templates/common/layout.html
 include rtk8s/templates/v1/service/app/templates/pages/home/index.html
 include rtk8s/templates/v1/service/app/templates/pages/about/index.html
 include rtk8s/templates/v1/service/app/templates/pages/dashboard/index.html
+include rtk8s/templates/v1/service/app/templates/pages/errors/index.html
+include rtk8s/templates/v1/service/app/templates/pages/login/index.html
 include rtk8s/templates/v1/service/app/manifests/deployment.yml.j2
 include rtk8s/templates/v1/service/app/manifests/service.yml.j2
 include rtk8s/templates/v1/service/proxy/app.py.j2

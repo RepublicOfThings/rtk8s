@@ -4,8 +4,13 @@ app:
   name: "{{ app.name }}"
   host: "{{ app.host }}"
   port: "80"
-  scheme: "http"
+  scheme: "https"
+
   replicas: 1
+
+  credentials:
+    - username: "republic"
+      password: "R3public1"
 
   dashboards:
     Vodafone:
@@ -29,4 +34,4 @@ app:
       - "/app/content/republic.css"
 
   deployment:
-    repo: "localhost:32000"
+    dockerRepo: "{{ repository }}"
