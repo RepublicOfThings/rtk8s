@@ -30,11 +30,14 @@
     <body>
 
         <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 republic-toolbar border-bottom box-shadow">
-            <h5 class="my-0 mr-md-auto font-weight-normal"><img src="{{ url_for('static', filename='img/logos/vodafone.png') }}" style="max-width: 15%;"></h5>
+            <h5 class="my-0 mr-md-auto font-weight-normal">
+                <img src="{{ url_for('content', variant='partner') }}"
+                     style="max-width: 15%; max-height: 5%;"></h5>
             <nav class="my-2 my-md-0 mr-md-3">
                 <a class="p-2 text-dark" href="{{ url_for('home') }}">Home</a>
                 <a class="p-2 text-dark" href="{{ url_for('about') }}">About</a>
-                <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle text-dark" data-toggle="dropdown" href="#">Dashboards</a>
+                <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle text-dark"
+                   data-toggle="dropdown" href="#">Dashboards</a>
                 <div aria-labelledby="dropdown" class="dropdown-menu" id="dashboards_dropdown">
 
                 </div>
@@ -47,8 +50,8 @@
 
       <footer class="footer border-top">
           <div class="container">
-              <img style="max-height: 38px; padding: 5px;" src="{{ url_for('static', filename='img/logos/republic.png') }}">
-              <img style="max-height: 38px; padding: 5px;" src="{{ url_for('static', filename='img/logos/vodafone.png') }}">
+              <img style="max-height: 38px; padding: 5px;" src="{{ url_for('content', variant='partner') }}">
+              <img style="max-height: 38px; padding: 5px;" src="{{ url_for('content', variant='partner') }}">
           </div>
       </footer>
     </body>

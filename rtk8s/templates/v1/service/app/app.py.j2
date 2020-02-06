@@ -1,7 +1,9 @@
+import os
 import uuid
+import requests
 from urllib.parse import urljoin
 from werkzeug.routing import Rule
-from flask import Flask, render_template, request, abort, redirect, url_for
+from flask import Flask, render_template, request, abort, redirect, url_for, Response
 from flask_login import LoginManager, login_user, login_required, logout_user
 
 from utils import get_user
@@ -12,6 +14,8 @@ PROXY_BASE_URL = "{{ app.scheme }}://{{ app.host }}/{{ app.name }}-proxy/"
 
 CONFIG = {"dashboards": {{ app.dashboards }}}
 
+stylesheet = None
+images = {{ app.style.logos }}
 
 app = Flask(__name__, template_folder="templates", static_folder="static", static_url_path=PREFIX+"/static/")
 
@@ -78,6 +82,28 @@ def logout():
 @app.errorhandler(401)
 def page_not_found(e):
     return render_template("pages/errors/index.html", title="Ooops", e=e, status_code=401, **CONFIG)
+
+
+@app.route("/content/<string:variant>")
+def content(variant):
+
+    if variant in images:
+        path = images[variant]
+    elif variant == "stylesheet":
+        path = stylesheet
+    else:
+        raise ValueError(f"Unknown variant '{variant}'.")
+
+    if path.startswith("http"):
+        response = requests.get(path)
+        if response.ok:
+            return response.content
+        else:
+            return Response(response.content, status=response.status_code)
+    else:
+        with open(os.path.join("static", path), "rb") as file:
+            app.logger.debug(f"{os.path.join('static', path)}'")
+            return Response(file.read(), status=200)
 
 
 @login_manager.user_loader

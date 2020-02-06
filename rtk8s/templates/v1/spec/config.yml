@@ -26,9 +26,9 @@ app:
 
   style:
     logos:
-      smeiling: "/app/SmEILing.png"
-      republic: "/app/republic_logo.png"
-      partner: "/app/vodafone.png"
+      smeiling: "img/logos/SmEILing.png"
+      republic: "img/logos/republic_logo.png"
+      partner: "img/logos/vodafone.png"
 
     stylesheets:
       - "/app/content/republic.css"
