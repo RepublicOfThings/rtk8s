@@ -49,12 +49,15 @@ def about():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    id_ = request.args["id_"]
-    return render_template("pages/dashboard/index.html",
-                           title=f"{id_} Dashboard",
-                           target=urljoin(PROXY_BASE_URL, "login" + f"?id_={id_}"),
-                           dashboard=id_, **CONFIG)
-
+    try:
+        id_ = request.args["id_"]
+        id_ = id_.replace("%20", " ")
+        return render_template("pages/dashboard/index.html",
+                               title=f"{id_} Dashboard",
+                               target=urljoin(PROXY_BASE_URL, "login" + f"?id_={id_}"),
+                               dashboard=id_, **CONFIG)
+    except KeyError:
+        return abort(404)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -82,6 +85,11 @@ def logout():
 @app.errorhandler(401)
 def page_not_found(e):
     return render_template("pages/errors/index.html", title="Ooops", e=e, status_code=401, **CONFIG)
+
+
+@app.errorhandler(404)
+def missing_dashboard(e):
+    return render_template("pages/errors/index.html", title="Ooops", e=e, status_code=404, **CONFIG)
 
 
 @app.route("/content/<string:variant>")

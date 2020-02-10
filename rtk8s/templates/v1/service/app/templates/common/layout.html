@@ -63,7 +63,7 @@
 
             $.each(data, function(key, _) {
                 let url = "{{ url_for('dashboard') }}?id_="+key;
-                let link = "<a href=" + url + " class='dropdown-item'>"+key+"</a>";
+                let link = "<a href=" + url.replace(/\s/g, '%20') + " class='dropdown-item'>"+key+"</a>";
                 $("#dashboards_dropdown").append(link);
             });
         });
