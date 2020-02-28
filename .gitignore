@@ -135,5 +135,5 @@ dmypy.json
 .idea/libraries/R_User_Library.xml
 sandbox.py
 config.yml
-.rtk8s_apps
+.rtk8s_apps/*
 config.yml
