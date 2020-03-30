@@ -32,15 +32,25 @@ def proxy(path: str):
         data = session.get(
             f"{SPLUNK_BASE_URL}/en-US/{path}", params=request.args
         ).content
+
         data = data.decode("utf-8")
-        data = data.replace("/en-US", f"{SUBPATH}/en-US")
+
+        # ware the hax
         if path.endswith("dashboard.js"):
-            data = data.replace('make_url("/static/build/pages/enterprise")',
-                                f'"{SUBPATH}" + make_url("/static/build/pages/enterprise")')
+            k = len(data)
+            target = 'combinedPath="/"+getConfigValue("LOCALE","en-US")+output;'
+            new_chunk = f'combinedPath="{SUBPATH}/"' \
+                        f'+getConfigValue("LOCALE", "en-US")+output;'
+            data = data.replace(target, new_chunk)
+            LOGGER.debug("dashboard.js delta: %d" % abs(len(data) - k))
 
         if path.endswith("common.js"):
+            k = len(data)
             data = data.replace('splunkUtil.make_url',
                                 f'"{SUBPATH}" + splunkUtil.make_url')
+            LOGGER.debug("common.js delta: %d" % abs(len(data) - k))
+
+        data = data.replace("/en-US", f"{SUBPATH}/en-US")
 
     except UnicodeDecodeError:
         data = session.get(

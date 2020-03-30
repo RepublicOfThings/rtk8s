@@ -18,7 +18,9 @@ class Ingress:
             },
             "spec": {
                 "tls": [{"secretName": "smeiling-tls", "hosts": [host]}],
-                "rules": [{"host": host, "http": {"paths": [*self._build_rules(paths)]}}],
+                "rules": [
+                    {"host": host, "http": {"paths": [*self._build_rules(paths)]}}
+                ],
             },
         }
 

@@ -27,12 +27,18 @@ def _pod_identifiers(name, suffixes=("-app", "-proxy-app")):
     ids = []
 
     if len(suffixes) == 0:
-        suffixes = ("", )
+        suffixes = ("",)
 
     for suffix in suffixes:
-        names = subprocess.Popen(f"{KUBECTL} get pods --all-namespaces".split(), stdout=subprocess.PIPE)
-        matches = subprocess.Popen(('grep', f'{name}{suffix}'), stdin=names.stdout, stdout=subprocess.PIPE)
-        filtered = subprocess.Popen(('awk', "{print $2}"), stdin=matches.stdout, stdout=subprocess.PIPE)
+        names = subprocess.Popen(
+            f"{KUBECTL} get pods --all-namespaces".split(), stdout=subprocess.PIPE
+        )
+        matches = subprocess.Popen(
+            ("grep", f"{name}{suffix}"), stdin=names.stdout, stdout=subprocess.PIPE
+        )
+        filtered = subprocess.Popen(
+            ("awk", "{print $2}"), stdin=matches.stdout, stdout=subprocess.PIPE
+        )
         names.stdout.close()
         target = filtered.communicate()[0].decode("utf-8").replace("\n", "")
         ids.append(target)
@@ -88,7 +94,10 @@ def version():
 @click.option("-p", "--prefix", default=RTK_APP_DIR)
 @click.option("-y", is_flag=True)
 def delete(target, prefix, y):
-    """Delete a target deployment. This will remove _all_ apps associated with this deployment, including metadata."""
+    """
+    Delete a target deployment. This will remove _all_ apps associated with this
+    deployment, including metadata.
+    """
     root = os.path.join(prefix, target)
     if not os.path.exists(root):
         raise FileNotFoundError(
@@ -107,7 +116,9 @@ def delete(target, prefix, y):
                 name = os.path.splitext(app)[0]
                 print(f"Deleting '{name}'...")
                 cdir = os.path.join(root, "src", name, "app", "manifests")
-                for file in os.listdir(os.path.join(root, "src", name, "app", "manifests")):
+                for file in os.listdir(
+                    os.path.join(root, "src", name, "app", "manifests")
+                ):
                     _cmd(f"{KUBECTL} delete -f {os.path.join(cdir, file)}")
 
                 cdir = os.path.join(root, "src", name, "proxy", "manifests")
@@ -134,7 +145,10 @@ def create(deployment, ssl_keys, prefix, config, host):
     """Create a new deployment."""
 
     if config is None and host is None:
-        raise ValueError("You must either set the hostname or provide a configuration file for your deployment.")
+        raise ValueError(
+            "You must either set the hostname or provide a configuration file for your "
+            "deployment."
+        )
 
     path = os.path.join(prefix, deployment)
     if os.path.exists(path):
@@ -167,9 +181,7 @@ def create(deployment, ssl_keys, prefix, config, host):
         os.makedirs(os.path.join(path, "conf"))
         settings_path = os.path.join(path, "conf", "settings.json")
 
-        settings = {
-            "host": host or config["host"]
-        }
+        settings = {"host": host or config["host"]}
 
         with open(settings_path, "w") as settings_file:
             settings_file.write(json.dumps(settings, indent=4))
@@ -196,7 +208,8 @@ def add(name, deployment, prefix, config, repository, template):
         app_info = {"host": os.getenv("SMEILING_HOST", ""), "name": name}
 
         data = render_string(
-            open(template).read(), {"app": app_info, "splunk": splunk_info, "repository": repository}
+            open(template).read(),
+            {"app": app_info, "splunk": splunk_info, "repository": repository},
         )
 
         config = yaml.load(io.StringIO(data), yaml.SafeLoader)
@@ -218,6 +231,57 @@ def add(name, deployment, prefix, config, repository, template):
     else:
         with open(config_path, "w") as config_file:
             config_file.write(json.dumps(config, indent=4))
+
+
+@cli.command()
+@click.argument("deployment")
+@click.option("-n", "--name")
+@click.option("-p", "--prefix", default=RTK_APP_DIR)
+@click.option("-T", "--templates", default=RTK_SVC_TEMPLATE)
+@click.option("-A", "--all-apps", is_flag=True)
+@click.option("-Y", "--confirm", is_flag=True)
+def update(deployment, prefix, name, templates, all_apps, confirm):
+    """
+    Update one or more apps in a deployment.
+
+    Updating involves first removing an app, and then rebuilding it from the app's spec.
+    """
+
+    root = os.path.join(prefix, deployment, "registry")
+
+    def _update_individual(app_id):
+        print(f"Cleaning {app_id} app...")
+        _cmd(f"rtkctl remove {app_id} {deployment} -p {prefix}")
+        print(f"Redeploying {app_id} app...")
+        _cmd(f"rtkctl deploy {app_id} {deployment} -p {prefix} -R -O -T {templates}")
+        print(f"Updated {app_id} app!")
+
+    if not all_apps:
+        if f"{name}.json" in os.listdir(root):
+            _update_individual(name)
+    else:
+
+        if not confirm:
+            prompt = input(
+                f"The action you are about to take is irreversible. "
+                f"Are you sure you want to update the '{deployment}' "
+                f"deployment? Y/n"
+            )
+
+            confirm = True if prompt == "Y" else False
+
+        if confirm:
+            updated = []
+            for root, dirs, files in os.walk(root):
+                for file in files:
+                    name, ext = file.split(".")
+                    if ext == "json":
+                        _update_individual(name)
+                        updated.append(name)
+
+            print(f"The following apps were successfully updated: {','.join(updated)}")
+        else:
+            print("Aborting...")
 
 
 @cli.command()
@@ -263,7 +327,8 @@ def deploy(name, deployment, prefix, templates, rebuild, overwrite):
                 for file in files:
                     if file == "Dockerfile":
                         _cmd(
-                            f"docker build {src_path} -t {name}-{component}:latest -f {src_path}/{component}/Dockerfile"
+                            f"docker build {src_path} -t {name}-{component}:latest -f "
+                            f"{src_path}/{component}/Dockerfile"
                         )
 
                         repo_host = (
@@ -293,9 +358,9 @@ def deploy(name, deployment, prefix, templates, rebuild, overwrite):
 
     if rebuild:
         print("Deleting legacy pods...")
-        # this forces the cluster to use the most recent image -- they will respawn after being deleted.
+        # this forces the cluster to use the most recent image -- they will respawn
+        # after being deleted. Not pleasant.
         for pod in _pod_identifiers(name):
-            print(pod)
             _cmd(f"{KUBECTL} delete pods {pod}")
 
     print(
